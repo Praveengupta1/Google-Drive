@@ -65,7 +65,7 @@ async function generatePublicUrlForFolder(){
       const result = await drive.files.get({
         fileId: childFolderId,
         supportsAllDrives: true,
-        fields: "webViewLink, webContentLink",
+        fields: "webViewLink",
       });
       console.log(result.data);
   }
@@ -74,7 +74,7 @@ async function generatePublicUrlForFolder(){
   }
 }
 
-// generatePublicUrlForFolder()
+generatePublicUrlForFolder()
 
 /** uploading file */
 async function uploadFile() {
@@ -98,7 +98,7 @@ async function uploadFile() {
   }
 }
 
-uploadFile();
+// uploadFile();
 
 
 /** generatingUrl for file */
