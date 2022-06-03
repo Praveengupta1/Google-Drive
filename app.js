@@ -45,7 +45,36 @@ async function createFolder() {
     console.log(e.message);
   }
 }
+
+
 // createFolder();
+
+/** gernrating url for folder */
+async function generatePublicUrlForFolder(){
+  try{
+      await drive.permissions.create(
+        {
+          fileId: childFolderId,
+          supportsAllDrives: true,
+          requestBody: {
+            role: "reader",
+            type: "anyone",
+          },
+        }
+      );
+      const result = await drive.files.get({
+        fileId: childFolderId,
+        supportsAllDrives: true,
+        fields: "webViewLink, webContentLink",
+      });
+      console.log(result.data);
+  }
+  catch(e){
+    console.log(e.message);
+  }
+}
+
+// generatePublicUrlForFolder()
 
 /** uploading file */
 async function uploadFile() {
@@ -69,9 +98,10 @@ async function uploadFile() {
   }
 }
 
-// uploadFile();
+uploadFile();
 
-/** generatingUrl */
+
+/** generatingUrl for file */
 
 async function generatePublicUrl() {
   try {
