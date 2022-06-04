@@ -25,13 +25,13 @@ though this can be any filePath
 const filePath = path.join(__dirname, "example.jpg");
 
 let paraentFolderId = "0ANN0o7ENmrxuUk9PVA";
-let childFolderId = "1BD0ulWKO43q2qPzqTDzx063GIeukgpDm";
+let childFolderId = "1arA5yj5VjsvfCXqvw5vAoNckYn6j_GYa";
 let fileId = "1pTnLJ2Vc5e4trtAHbKg576mQqdT3D0g-";
 /** create a folder  */
 async function createFolder() {
   try {
     const fileMetadata = {
-      name: "Praveen Gupta",
+      name: "ABC 123",
       mimeType: "application/vnd.google-apps.folder",
       parents: [paraentFolderId],
     };
