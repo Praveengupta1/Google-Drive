@@ -3,7 +3,8 @@ const app = require('express')();
 const bodyParser = require('body-parser');
 const { google } = require("googleapis");
 const multer = require('multer');
-const fs = require('fs')
+const stream = require('stream');
+
 /** set object format */
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended : true, limit : '50mb' }));
@@ -74,45 +75,41 @@ app.get('/url/:fieldId', async(req, res)=>{
 
 /** upload a file  */
 
-const upload = multer({
-    storage: multer.diskStorage({
-      destination: function (req, file, callback) {
-        callback(null, `${__dirname}/upload`);
-      },
-      filename: function (req, file, callback) {
-        callback(null, file.fieldname + "_" + Date.now() + "_" + file.originalname);
-      },
-    })
-  });
+const upload = multer();
+const uploadFile = async (fileObject, folderId) => {
+    const bufferStream = new stream.PassThrough();
+    bufferStream.end(fileObject.buffer);    
+    const { data } = await drive.files.create({
+        media: {
+            mimeType: fileObject.mimeType,
+            body: bufferStream,
+        },
+        requestBody: {
+            name: fileObject.originalname,
+            parents: [folderId],
+        },
+        fields: 'id,name',
+        supportsAllDrives: true,
+    });
+    console.log(`Uploaded file ${data.name} ${data.id}`);
+};
+  
 
-app.post('/u/files', upload.array("files"), async(req, res)=>{
+app.post('/u/files', upload.any(), async (req, res) => {
     try {
-        console.log(req.files)
-        let { folderId} = req.body;
-        let data = [];
-        for(let idx = 0; idx<req.files.length; idx++){
-            let { filename, mimetype, path}= req.files[idx];
-            const response = await drive.files.create({
-                requestBody: {
-                  name: filename, //This can be name of your choice
-                  mimeType: mimetype,
-                  parents: [folderId],
-                },
-                media: {
-                  mimeType: mimetype,
-                  body: fs.createReadStream(path),
-                },
-                supportsAllDrives: true,
-              });
-            data.push(response.data)
-        }
-      
-        res.status(200).send({message : "successfully file uploaded ", data : data});
-    } catch (e) {
-        res.status(400).send({message : e.message});
+      const { body, files  } = req;
+        const { folderId } = body;
+      for (let f = 0; f < files.length; f += 1) {
+        await uploadFile(files[f], folderId);
+      }
+  
+      console.log(body);
+      res.status(200).send('Form Submitted');
+    } catch (f) {
+      res.send(f.message);
     }
-})
-
+  });
+  
 /** delete a folder or file  */
 app.post('/d/field', async(req, res)=>{
     try {
@@ -126,4 +123,26 @@ app.post('/d/field', async(req, res)=>{
         res.status(400).send({message : e.message});
     }
 })
+
+/**  get folder info */
+app.get('/info/:fieldId', async(req, res)=>{
+    let { fieldId } = req.params;
+    const result = await drive.files
+    .get({ fileId: fieldId , supportsAllDrives: true,})
+    .catch((err) => console.log(err.errors));
+    let query = "'" + fieldId +"' in parents and mimeType contains 'image/' and trashed = false";
+    drive.files.list(
+        {
+          q: query,
+          fields: "files(id, name)",
+          supportsAllDrives: true
+        },
+        (err, response)=>{
+            if(err) console.log(err.message);
+            else console.log(response.data);
+        }
+    )
+    return res.status(200).send({message : "info", data : result});
+
+}) 
 app.listen(process.env.PORT,()=>console.log(`Server is starting at PORT ${process.env.PORT}`))
